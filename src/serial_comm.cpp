@@ -333,14 +333,18 @@ void SerialComm::ProcPubData()
             dist = dist>0?dist:0;
 
             if(bot>10&&top>10
-               &&bot<230&&top<230){
+               &&bot<230&&top<230&&dist!=0){
                 //distance unity is cm
                 dist_dataholder[i] = dist;  // better to calculate all the data and do average
             }
+            else
+                dist_dataholder[i] = 0;
+
 
         }
         rawdataholder_a[j].clear();
         rawdataholder_b[j].clear();
+        dist_dataholder[175] = dist_dataholder[176];
 
         if(j==RAWDATA_NUMBER-1)
         {

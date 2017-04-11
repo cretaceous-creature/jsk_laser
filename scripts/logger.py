@@ -81,7 +81,7 @@ def clicked():
     print("curve clicked")
 
 def callback(data):
-    rospy.loginfo("%f", data.distances[100])
+#    rospy.loginfo("%f", data.distances[100])
     data.distances = list(data.distances)
     for i in range(0, 20):
         data.distances[i] = np.asarray(data.distances[i]) * 0
@@ -93,7 +93,7 @@ def callback(data):
 def rawdatacallback(data):
 
     mw.show()
-    for j in range(0, 4):
+    for j in range(0, 5):
         data_a = []
         data_b = []
         for i in range(0, 272):
