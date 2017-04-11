@@ -337,10 +337,6 @@ void SerialComm::ProcPubData()
                 //distance unity is cm
                 dist_dataholder[i] = dist;  // better to calculate all the data and do average
             }
-            else
-                dist_dataholder[i] = 0;
-
-
         }
         rawdataholder_a[j].clear();
         rawdataholder_b[j].clear();
@@ -351,6 +347,7 @@ void SerialComm::ProcPubData()
             for(int k = 0; k<STEPSIZE/2;k++)
             {
                 laserdata_msg.distances.push_back(dist_dataholder[k]);
+                dist_dataholder[k] = 0; //clear this buffer
             }
             rawdata_pub_.publish(rawdata_msg);
             distances_pub_.publish(laserdata_msg);
