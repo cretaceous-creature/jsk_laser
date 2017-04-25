@@ -83,9 +83,9 @@ def clicked():
 def callback(data):
 #    rospy.loginfo("%f", data.distances[100])
     data.distances = list(data.distances)
-    for i in range(0, 20):
+    for i in range(0, 16):
         data.distances[i] = np.asarray(data.distances[i]) * 0
-    for i in range(210,271):
+    for i in range(255,271):
         data.distances[i] = np.asarray(data.distances[i]) * 0
     data.distances = np.asarray(data.distances)
     p11.setData(data.distances)
