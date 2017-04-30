@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<launch>
+
+<arg name="debug" default="false" />
+<arg name="serial_port" default="/dev/ttyUSB0" />
+<arg name="baudrate" default="2000000" />
+
+<arg name="laser_name" default="S" />
+<arg name="onlydistdata" default="false" />
+<!-- arg unless="$(arg debug)" name="launch_prefix" value="" /-->
+
+<node name="jsk_laser_node" pkg="jsk_laser" type="jsk_laser_node" output="screen">
+  <param name="serial_port" value="/dev/ttyUSB0" />
+          <rosparam subst_value="true">
+            serial_port: $(arg serial_port)
+            baudrate: $(arg baudrate)
+            laser_name: $(arg laser_name)
+            onlydistdata: $(arg onlydistdata)
+          </rosparam>
+
+</node>
+
+<node name="laser_logger" pkg="jsk_laser" type="logger.py" output="screen">
+</node>
+
+</launch>
