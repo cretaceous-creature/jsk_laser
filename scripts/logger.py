@@ -8,8 +8,9 @@ from pyqtgraph.Qt import QtGui, QtCore
 import numpy as np
 import pyqtgraph as pg
 
+normalshow = 0
 
-#QtGui.QApplication.setGraphicsSystem('raster')
+QtGui.QApplication.setGraphicsSystem('raster')
 
 app = QtGui.QApplication([])
 mw = QtGui.QMainWindow()
@@ -87,7 +88,15 @@ def callback(data):
         data.distances[i] = np.asarray(data.distances[i]) * 0
     for i in range(255,271):
         data.distances[i] = np.asarray(data.distances[i]) * 0
-    data.distances = np.asarray(data.distances)
+    data.distances[17] = np.asarray(data.distances[19])
+    data.distances[16] = np.asarray(data.distances[19])
+    data.distances[176] = np.asarray(data.distances[177])
+    data.distances[175] = np.asarray(data.distances[174])
+    if not normalshow:
+        for i in range(0,136):
+            tmp = data.distances[i]
+            data.distances[i] = np.asarray(data.distances[271-i])
+            data.distances[271-i] = np.asarray(tmp)
     p11.setData(data.distances)
 
 def rawdatacallback(data):
@@ -96,9 +105,15 @@ def rawdatacallback(data):
     for j in range(0, 5):
         data_a = []
         data_b = []
-        for i in range(0, 272):
-            data_a.append(data.data_a[j*272+i])
-            data_b.append(data.data_b[j*272+i])
+        if normalshow:
+            for i in range(0, 272):
+                data_a.append(data.data_a[j*272+i])
+                data_b.append(data.data_b[j*272+i])
+        else:
+            for i in range(271, -1, -1):
+                data_a.append(data.data_a[j*272+i])
+                data_b.append(data.data_b[j*272+i])
+
         
         if j == 0:
             p1.setData(data_a)
@@ -118,7 +133,7 @@ def rawdatacallback(data):
         else:
             rospy.loginfo("Data error.....")
 
-        mw.show()
+#        mw.show()
 
 def logger():
 

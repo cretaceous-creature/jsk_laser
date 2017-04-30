@@ -97,7 +97,9 @@ class SerialComm
   double poly[7];
 
   int pulse_num_buff[RAWDATA_NUMBER];
-#define laser_T
+
+  bool onlydistdata;
+
 
 };
 

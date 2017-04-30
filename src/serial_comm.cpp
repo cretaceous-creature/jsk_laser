@@ -25,58 +25,66 @@ SerialComm::SerialComm(ros::NodeHandle nh, ros::NodeHandle nhp)
 
   time_offset = 0;
 
-
-
-#ifdef laser_red
-   poly[0] = 1.648001258107309e+06;
-   poly[1] = -5.305835891559632e+06;
-   poly[2] = 7.127857366587162e+06;
-   poly[3] = -5.110547144753641e+06;
-   poly[4] = 2.060999435889212e+06;
-   poly[5] = -4.423848603771256e+05;
-   poly[6] = 3.937815633389474e+04;
-#endif
-
-#ifdef laser_J
-   poly[0] = 1.080440225625779e+08;
-   poly[1] = -3.556482005898511e+08;
-   poly[2] = 4.867548201126678e+08;
-   poly[3] = -3.545370162671905e+08;
-   poly[4] = 1.449389941243733e+08;
-   poly[5] = -3.153135596974714e+07;
-   poly[6] = 2.851713932900287e+06;
-#endif
-
-#ifdef laser_S
-   poly[0] = 9.949860195210000e+06;
-   poly[1] = -3.403464644171004e+07;
-   poly[2] = 4.794349816654099e+07;
-   poly[3] = -3.564527930065927e+07;
-   poly[4] = 1.476790480367754e+07;
-   poly[5] = -3.235046134612700e+06;
-   poly[6] = 2.928797455444256e+05;
-#endif
-
-#ifdef laser_K
-   poly[0] = 2.147918234375362e+06;
-   poly[1] = -7.736068312640203e+06;
-   poly[2] = 1.154494186428487e+07;
-   poly[3] = -9.137795412258314e+06;
-   poly[4] = 4.045684724836031e+06;
-   poly[5] = -9.494901699902674e+05;
-   poly[6] = 9.219599710241470e+04;
-#endif
-
-#ifdef laser_T
-   poly[0] = -6.539712337289967e+05;
-   poly[1] =  2.522196790614386e+06;
-   poly[2] = -3.966911268599921e+06;
-   poly[3] = 3.266065347655729e+06;
-   poly[4] = -1.487548484816432e+06;
-   poly[5] = 3.563561476000117e+05;
-   poly[6] = -3.519452184644648e+04;
-#endif
-
+  std::string laser_name;
+  nhp.param("laser_name", laser_name , std::string("S"));
+  nhp.param("onlydistdata", onlydistdata , true);
+  std::cout<<"laser_name: "<<laser_name<<std::endl;
+  std::cout<<"only use distance data?  "<<onlydistdata<<std::endl;
+  if(!laser_name.compare(std::string("R")))
+  {
+      //RED
+      poly[0] = 1.648001258107309e+06;
+      poly[1] = -5.305835891559632e+06;
+      poly[2] = 7.127857366587162e+06;
+      poly[3] = -5.110547144753641e+06;
+      poly[4] = 2.060999435889212e+06;
+      poly[5] = -4.423848603771256e+05;
+      poly[6] = 3.937815633389474e+04;
+  }
+  else if(!laser_name.compare(std::string("J")))
+  {
+      //J
+      poly[0] = 1.080440225625779e+08;
+      poly[1] = -3.556482005898511e+08;
+      poly[2] = 4.867548201126678e+08;
+      poly[3] = -3.545370162671905e+08;
+      poly[4] = 1.449389941243733e+08;
+      poly[5] = -3.153135596974714e+07;
+      poly[6] = 2.851713932900287e+06;
+  }
+  else if(!laser_name.compare(std::string("S")))
+  {
+      //S
+      poly[0] = 9.949860195210000e+06;
+      poly[1] = -3.403464644171004e+07;
+      poly[2] = 4.794349816654099e+07;
+      poly[3] = -3.564527930065927e+07;
+      poly[4] = 1.476790480367754e+07;
+      poly[5] = -3.235046134612700e+06;
+      poly[6] = 2.928797455444256e+05;
+  }
+  else if(!laser_name.compare(std::string("K")))
+  {
+      //K
+      poly[0] = 2.147918234375362e+06;
+      poly[1] = -7.736068312640203e+06;
+      poly[2] = 1.154494186428487e+07;
+      poly[3] = -9.137795412258314e+06;
+      poly[4] = 4.045684724836031e+06;
+      poly[5] = -9.494901699902674e+05;
+      poly[6] = 9.219599710241470e+04;
+  }
+  else
+  {
+      //T
+      poly[0] = -6.539712337289967e+05;
+      poly[1] =  2.522196790614386e+06;
+      poly[2] = -3.966911268599921e+06;
+      poly[3] = 3.266065347655729e+06;
+      poly[4] = -1.487548484816432e+06;
+      poly[5] = 3.563561476000117e+05;
+      poly[6] = -3.519452184644648e+04;
+  }
 
 }
 
@@ -198,7 +206,10 @@ void SerialComm::readCallback(const boost::system::error_code& error, size_t byt
         if(comm_buffer_[0] == SECOND_HEADER)
         {
             packet_stage_ = MSG_DATA_STAGE;
-            receive_data_size_ = DATA_SIZE * 2 - 2; // 1096 -2 = 1094
+            if(onlydistdata) // only distance data are acquired..
+                receive_data_size_ = DATA_SIZE  - 2; // 548 - 2 = 546
+            else
+                receive_data_size_ = DATA_SIZE * 2 - 2; // 1096 -2 = 1094
         }
         else
         {
@@ -215,67 +226,69 @@ void SerialComm::readCallback(const boost::system::error_code& error, size_t byt
     case MSG_DATA_STAGE:
     {
         //only distance
-#ifdef DIST_MEASURE  // only distance data are acquired..
-        jsk_laser::JskLaser laserdata_msg;
-        laserdata_msg.header.stamp = ros::Time::now();
-        int first_ender_index = DATA_SIZE - 2 - 2;
-        int second_ender_index = DATA_SIZE - 2 - 1;
-        if(comm_buffer_[first_ender_index] == FIRST_ENDER &&
-                comm_buffer_[second_ender_index] == SECOND_ENDER)
+        if(onlydistdata) // only distance data are acquired..
         {
-            laserdata_msg.distances.resize(0);
-            for(int i = 0; i < DATA_SIZE - 4; i+=2)
+            jsk_laser::JskLaser laserdata_msg;
+            laserdata_msg.header.stamp = ros::Time::now();
+            int first_ender_index = DATA_SIZE - 2 - 2;
+            int second_ender_index = DATA_SIZE - 2 - 1;
+            if(comm_buffer_[first_ender_index] == FIRST_ENDER &&
+                    comm_buffer_[second_ender_index] == SECOND_ENDER)
             {
-                short distance;
-                memcpy(&distance, &(comm_buffer_[i]),2);
-                //distances_msg.distances.push_back((float)distance/ SCALE);
-                laserdata_msg.distances.push_back(distance);   //only distance
-            }
-            distances_pub_.publish(laserdata_msg);
-        }
-#else    //5 pulses data..  need to calculate distance here..
-        //minus the first two bytes we have  2(num) + 2(pulse) + 544 * 2 + 2(ender) = 1094
-        int first_ender_index = DATA_SIZE * 2 - 2 - 2;  // should be 1092 = 1096 - 4
-        int second_ender_index = DATA_SIZE * 2 - 2 - 1; // should be 1093 = 1096 - 3
-        if(comm_buffer_[first_ender_index] == FIRST_ENDER &&
-                comm_buffer_[second_ender_index] == SECOND_ENDER)
-        {
-            uint16_t num, pulse_num;
-            memcpy(&num, &(comm_buffer_[0]),2);
-            memcpy(&pulse_num, &(comm_buffer_[2]),2);
-            pulse_num_buff[num] = pulse_num;
-            for(int i = 4; i < DATA_SIZE; i+=2)
-            {
-                 //  A: data[4] ~ data [544+4]
-                //   B: data[544 + 4] ~ data[544 + 4 + 544]
-                short rawdata;
-                if(num > 100)
+                laserdata_msg.distances.resize(0);
+                for(int i = 0; i < DATA_SIZE - 4; i+=2)
                 {
-                    num -= 100;
-                    memcpy(&rawdata, &(comm_buffer_[i]),2);
-                    rawdataholder_a[num].push_back((float)rawdata / 10);
-                    memcpy(&rawdata, &(comm_buffer_[i + 544]),2);
-                    rawdataholder_b[num].push_back((float)rawdata / 10);
-                    //all data received,  now we can process and publish... lol
-                    ProcPubData();
+                    short distance;
+                    memcpy(&distance, &(comm_buffer_[i]),2);
+                    //distances_msg.distances.push_back((float)distance/ SCALE);
+                    laserdata_msg.distances.push_back(distance);   //only distance
                 }
-                else
-                {
-                    memcpy(&rawdata, &(comm_buffer_[i]),2);
-                    rawdataholder_a[num].push_back((float)rawdata / 10);
-                    memcpy(&rawdata, &(comm_buffer_[i + 544]),2);
-                    rawdataholder_b[num].push_back((float)rawdata / 10);
-                }
-
+                distances_pub_.publish(laserdata_msg);
             }
         }
-#endif
-        else
+        else//5 pulses data..  need to calculate distance here..
         {
-            if(!error_receive_flag)
+            //minus the first two bytes we have  2(num) + 2(pulse) + 544 * 2 + 2(ender) = 1094
+            int first_ender_index = DATA_SIZE * 2 - 2 - 2;  // should be 1092 = 1096 - 4
+            int second_ender_index = DATA_SIZE * 2 - 2 - 1; // should be 1093 = 1096 - 3
+            if(comm_buffer_[first_ender_index] == FIRST_ENDER &&
+                    comm_buffer_[second_ender_index] == SECOND_ENDER)
             {
-                ROS_WARN("wrong ender");
-                error_receive_flag = true;
+                uint16_t num, pulse_num;
+                memcpy(&num, &(comm_buffer_[0]),2);
+                memcpy(&pulse_num, &(comm_buffer_[2]),2);
+                pulse_num_buff[num] = pulse_num;
+                for(int i = 4; i < DATA_SIZE; i+=2)
+                {
+                    //  A: data[4] ~ data [544+4]
+                    //   B: data[544 + 4] ~ data[544 + 4 + 544]
+                    short rawdata;
+                    if(num > 100)
+                    {
+                        num -= 100;
+                        memcpy(&rawdata, &(comm_buffer_[i]),2);
+                        rawdataholder_a[num].push_back((float)rawdata / 10);
+                        memcpy(&rawdata, &(comm_buffer_[i + 544]),2);
+                        rawdataholder_b[num].push_back((float)rawdata / 10);
+                        //all data received,  now we can process and publish... lol
+                        ProcPubData();
+                    }
+                    else
+                    {
+                        memcpy(&rawdata, &(comm_buffer_[i]),2);
+                        rawdataholder_a[num].push_back((float)rawdata / 10);
+                        memcpy(&rawdata, &(comm_buffer_[i + 544]),2);
+                        rawdataholder_b[num].push_back((float)rawdata / 10);
+                    }
+                }
+            }
+            else
+            {
+                if(!error_receive_flag)
+                {
+                    ROS_WARN("wrong ender");
+                    error_receive_flag = true;
+                }
             }
         }
 
