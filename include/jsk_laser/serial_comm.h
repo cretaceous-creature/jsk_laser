@@ -13,6 +13,7 @@
 #include <tf/transform_broadcaster.h>
 #include <geometry_msgs/Vector3Stamped.h>
 #include <vector>
+#include <sensor_msgs/LaserScan.h>
 
 class SerialComm
 {
@@ -43,6 +44,7 @@ class SerialComm
   ros::NodeHandle nhp_;
   ros::Publisher  distances_pub_;
   ros::Publisher  rawdata_pub_;
+  ros::Publisher  scan_pub_;
 
   void readCallback(const boost::system::error_code& error, size_t bytes_transferred);
   void readStart(uint32_t timeout_ms);
@@ -91,14 +93,21 @@ class SerialComm
   std::vector<float> rawdataholder_b[RAWDATA_NUMBER];  // five 544 data...
 
   float dist_dataholder[STEPSIZE/2];
+  float reflectance_dataholder[STEPSIZE/2];
 
   void ProcPubData();
 
   double poly[7];
 
-  int pulse_num_buff[RAWDATA_NUMBER];
+  unsigned int pulse_num_buff[RAWDATA_NUMBER];
 
   bool onlydistdata;
+  double lensfocus;
+  sensor_msgs::LaserScan laserscan_msg;
+  double stable_temperature;
+  double temperature_sensi;
+#define SENSOR_LENGTH 5.12
+#define PI 3.1415926535898
 
 
 };
