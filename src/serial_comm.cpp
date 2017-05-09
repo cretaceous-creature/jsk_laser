@@ -260,6 +260,7 @@ void SerialComm::readCallback(const boost::system::error_code& error, size_t byt
                     comm_buffer_[second_ender_index] == SECOND_ENDER)
             {
                 laserdata_msg.distances.resize(0);
+                laserdata_msg.reflectance.resize(0);
                 for(int i = 0; i < DATA_SIZE - 4; i+=2)
                 {
                     short distance;
@@ -281,7 +282,7 @@ void SerialComm::readCallback(const boost::system::error_code& error, size_t byt
                 uint16_t num, pulse_num;
                 memcpy(&num, &(comm_buffer_[0]),2);
                 memcpy(&pulse_num, &(comm_buffer_[2]),2);
-                pulse_num_buff[num] = pulse_num;
+                pulse_num_buff[num%100] = pulse_num;
                 for(int i = 4; i < DATA_SIZE; i+=2)
                 {
                     //  A: data[4] ~ data [544+4]
@@ -348,7 +349,6 @@ void SerialComm::ProcPubData()
     {
         if(rawdataholder_a[j].size())
             rawdata_msg.num_array.push_back(j);
-
         for(int i = 0; i < rawdataholder_a[j].size(); i++)
         {
             rawdata_msg.data_a.push_back(rawdataholder_a[j].at(i));
@@ -376,6 +376,7 @@ void SerialComm::ProcPubData()
                &&bot<230&&top<230&&dist!=0){
                 //distance unity is cm
                 dist_dataholder[i] = dist;  // better to calculate all the data and do average
+                reflectance_dataholder[i] = dist * dist * (bot + top) / (pulse_num_buff[j] % 100);
             }
         }
         rawdataholder_a[j].clear();
@@ -385,12 +386,17 @@ void SerialComm::ProcPubData()
         if(j==RAWDATA_NUMBER-1)
         {
             laserscan_msg.ranges.clear();
+            laserscan_msg.intensities.clear();
             for(int k = 0; k<STEPSIZE/2;k++)
             {
                 laserdata_msg.distances.push_back(dist_dataholder[k]);
-                if(k>=8&&k<(STEPSIZE/2-8))
-                    laserscan_msg.ranges.push_back(dist_dataholder[k]/100);
+                laserdata_msg.reflectance.push_back(reflectance_dataholder[k]);
+                if(k>=8&&k<(STEPSIZE/2-8)){
+                  laserscan_msg.ranges.push_back(dist_dataholder[k]/100);
+                  laserscan_msg.intensities.push_back(reflectance_dataholder[k]/5000>1?1:reflectance_dataholder[k]/5000);
+                }
                 dist_dataholder[k] = 0; //clear this buffer
+                reflectance_dataholder[k] = 0; //clear this buffer
             }
             rawdata_pub_.publish(rawdata_msg);
             distances_pub_.publish(laserdata_msg);
