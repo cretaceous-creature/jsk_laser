@@ -93,6 +93,7 @@ class SerialComm
   std::vector<float> rawdataholder_b[RAWDATA_NUMBER];  // five 544 data...
 
   float dist_dataholder[STEPSIZE/2];
+  float reflectance_dataholder[STEPSIZE/2];
 
   void ProcPubData();
 
