@@ -105,6 +105,7 @@ class SerialComm
   double lensfocus;
   sensor_msgs::LaserScan laserscan_msg;
   double stable_temperature;
+  double temperature_sensi;
 #define SENSOR_LENGTH 5.12
 #define PI 3.1415926535898
 

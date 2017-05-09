@@ -59,6 +59,7 @@ SerialComm::SerialComm(ros::NodeHandle nh, ros::NodeHandle nhp)
       poly[5] = -4.423848603771256e+05 -15;
       poly[6] = 3.937815633389474e+04 + 9;
       stable_temperature=480.0; // 48degree
+      temperature_sensi = 0.09623;
   }
   else if(!laser_name.compare(std::string("J")))
   {
@@ -71,6 +72,7 @@ SerialComm::SerialComm(ros::NodeHandle nh, ros::NodeHandle nhp)
       poly[5] = 2.199337693620224e+07;
       poly[6] = -2.024360412459942e+06 + 6;
       stable_temperature=460.0; // 48degree
+      temperature_sensi = 0.05623;
   }
   else if(!laser_name.compare(std::string("S")))
   {
@@ -83,6 +85,7 @@ SerialComm::SerialComm(ros::NodeHandle nh, ros::NodeHandle nhp)
       poly[5] = 2.199337693620224e+07;
       poly[6] = -2.024360412459942e+06;
       stable_temperature=440.0; // 48degree
+      temperature_sensi = 0.05623;
   }
   else if(!laser_name.compare(std::string("K")))
   {
@@ -95,6 +98,7 @@ SerialComm::SerialComm(ros::NodeHandle nh, ros::NodeHandle nhp)
       poly[5] = -9.494901699902674e+05;
       poly[6] = 9.219599710241470e+04;
       stable_temperature=440.0; // 48degree
+      temperature_sensi = 0.05623;
   }
   else
   {
@@ -107,6 +111,7 @@ SerialComm::SerialComm(ros::NodeHandle nh, ros::NodeHandle nhp)
       poly[5] = 3.563561476000117e+05;
       poly[6] = -3.519452184644648e+04;
       stable_temperature=440.0; // 48degree
+      temperature_sensi = 0.05623;
   }
 
 }
@@ -362,7 +367,7 @@ void SerialComm::ProcPubData()
             if(bot>240||bot<0)
                 dist= 0;
             else if(bot+top>10 + (pulse_num_buff[j]%100)*0.4){  //here should be + TIMERCOUNTER * 0.4
-                float temperature =  (stable_temperature - (int)(pulse_num_buff[0]/100))*0.05623;  //last part is the temperature compensate
+                float temperature =  (stable_temperature - (int)(pulse_num_buff[0]/100)) * temperature_sensi;  //last part is the temperature compensate
                 //temperature = temperature <-2?-2:temperature;
                 dist = poly[0]*k*k*k*k*k*k + poly[1]*k*k*k*k*k + poly[2]*k*k*k*k
                         + poly[3]*k*k*k + poly[4]*k*k + poly[5]*k + poly[6] + temperature;
