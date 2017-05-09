@@ -77,15 +77,15 @@ SerialComm::SerialComm(ros::NodeHandle nh, ros::NodeHandle nhp)
   else if(!laser_name.compare(std::string("S")))
   {
       //S
-      poly[0] = -7.030060013434869e+07;
-      poly[1] = 2.340939930305397e+08;
-      poly[2] = -3.244894105718181e+08;
-      poly[3] = 2.396546574907680e+08;
-      poly[4] = -9.946220641072804e+07;
-      poly[5] = 2.199337693620224e+07;
-      poly[6] = -2.024360412459942e+06;
-      stable_temperature=440.0; // 48degree
-      temperature_sensi = 0.05623;
+      poly[0] = 2.004878860926888e+09;
+      poly[1] = -6.155609773756969e+09;
+      poly[2] = 7.872203128922240e+09;
+      poly[3] = -5.367517768838326e+09;
+      poly[4] = 2.057909512255952e+09;
+      poly[5] = -4.206589491410656e+08;
+      poly[6] = 3.581571264948885e+07 + 6;
+      stable_temperature=470.0; // 47degree
+      temperature_sensi = 0.09623;
   }
   else if(!laser_name.compare(std::string("K")))
   {
@@ -108,9 +108,9 @@ SerialComm::SerialComm(ros::NodeHandle nh, ros::NodeHandle nhp)
       poly[2] = -3.966911268599921e+06;
       poly[3] = 3.266065347655729e+06;
       poly[4] = -1.487548484816432e+06;
-      poly[5] = 3.563561476000117e+05;
-      poly[6] = -3.519452184644648e+04;
-      stable_temperature=440.0; // 48degree
+      poly[5] = 3.563561476000117e+05 + 20;
+      poly[6] = -3.519452184644648e+04 - 9 + 6;
+      stable_temperature=460.0; // 48degree
       temperature_sensi = 0.05623;
   }
 

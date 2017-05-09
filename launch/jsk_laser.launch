@@ -6,10 +6,10 @@
 <arg name="serial_port" default="/dev/ttyUSB0" />
 <arg name="baudrate" default="2000000" />
 
-<arg name="laser_name" default="J" />
+<arg name="laser_name" default="S" />
 <arg name="laser_link" default="laser_link" />
 <arg name="onlydistdata" default="false" />
-<arg name="lensfocus" default="3.6" />
+<arg name="lensfocus" default="8.0" />
 
 <!-- arg unless="$(arg debug)" name="launch_prefix" value="" /-->
 
