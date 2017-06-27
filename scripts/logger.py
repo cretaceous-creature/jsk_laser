@@ -7,8 +7,13 @@ from jsk_laser.msg import *
 from pyqtgraph.Qt import QtGui, QtCore
 import numpy as np
 import pyqtgraph as pg
+import math
+from sklearn.cluster import DBSCAN
 
-normalshow = 0
+normalshow = 1
+enabelDBSCAN = 1
+focus = 3.6/5.12
+PI = math.atan(1)*4
 
 QtGui.QApplication.setGraphicsSystem('raster')
 
@@ -28,29 +33,31 @@ mw.show()
 ## Create an empty plot curve to be filled later, set its pen
 #then is buff_a  we have 5... 
 p1 = pw.plot()
-p1.setPen((255,0,0))
+p1.setPen((255,0,0),width=3)
 p2 = pw.plot()
-p2.setPen((100,100,0))
+p2.setPen((100,100,0),width=3)
 p3 = pw.plot()
-p3.setPen((200,40,40))
+p3.setPen((200,40,40),width=3)
 p4 = pw.plot()
-p4.setPen((155,255,0))
+p4.setPen((155,255,0),width=3)
 p5 = pw.plot()
-p5.setPen((100,200,0))
+p5.setPen((100,200,0),width=3)
 #then is buff_b  we also have 5... 
 p6 = pw.plot()
-p6.setPen((0,0,255))
+p6.setPen((0,0,255),width=3)
 p7 = pw.plot()
-p7.setPen((40,40,255))
+p7.setPen((40,40,255),width=3)
 p8 = pw.plot()
-p8.setPen((0,255,150))
+p8.setPen((0,255,150),width=3)
 p9 = pw.plot()
-p9.setPen((0,200,100))
+p9.setPen((0,200,100),width=3)
 p10 = pw.plot()
-p10.setPen((0,100,100))
+p10.setPen((0,100,100),width=3)
 #p11 is the distance
 p11 = pw.plot()
-p11.setPen((255,255,255))
+p11.setPen((255,255,255),width=3)
+p12 = pw.plot()
+p12.setPen((255,0,255),width=5)
 
 ## Add in some extra graphics
 rect = QtGui.QGraphicsRectItem(QtCore.QRectF(0, 0, 1, 5e-11))
@@ -81,8 +88,45 @@ def updateData():
 def clicked():
     print("curve clicked")
 
+def cluster_dist(data):
+    #calculate the distance points..
+    #the data from 1 to 256 is a different axis..
+    points = np.zeros((256,2))
+    angle_min = math.atan(2*focus)
+    angle_increment = (PI - 2*angle_min)/256
+    for i in range(0,256):
+        distance = 0
+        if data.distances[i+8]>0:
+            distance = data.distances[i+8] + 10  # set a offset to 0...
+        points[i][0] = math.cos(PI-angle_min-angle_increment*i)*distance
+        points[i][1] = math.sin(PI-angle_min-angle_increment*i)*distance
+    #rospy.loginfo("x is %f, y is %f", points[125][0], points[125][1])
+    #the parameters need to be carefully chosen, eps is the distance, in cm...
+    #min_samples is the points that to be considered as a cluster....
+    db = DBSCAN(eps=2, min_samples=8).fit(points)
+    labels = db.labels_
+
+    n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
+    print('Estimated number of clusters: %d' % n_clusters_)
+    return labels, n_clusters_
+
 def callback(data):
 #    rospy.loginfo("%f", data.distances[100])
+    if enabelDBSCAN:
+        labels, n_clusters = cluster_dist(data)
+        labeldata = list(data.distances)  #create a buffer to hold the label..
+        data.reflectance = list(data.reflectance)
+        for i in range(0,256):
+            data.reflectance[i+8] = labels[i]
+        labelpub = rospy.Publisher("/label_data",JskLaser,queue_size=1)
+        labelpub.publish(data)
+        for i in range(0,256):
+            for j in range(0,n_clusters):
+                if labels[i] == -1:
+                    labels[i] = labels[i-1]
+                labeldata[i+8] = (labels[i]+2)*50
+        p12.setData(labeldata)
+
     data.distances = list(data.distances)
     for i in range(0, 16):
         data.distances[i] = np.asarray(data.distances[i]) * 0
@@ -146,7 +190,6 @@ def logger():
 
     rospy.Subscriber("/laser_data", JskLaser, callback)
     rospy.Subscriber("/laserraw_data", JskLaserRaw, rawdatacallback)
-
     # spin() simply keeps python from exiting until this node is stopped
 
 

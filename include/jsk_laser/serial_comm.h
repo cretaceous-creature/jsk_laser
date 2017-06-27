@@ -45,11 +45,14 @@ class SerialComm
   ros::Publisher  distances_pub_;
   ros::Publisher  rawdata_pub_;
   ros::Publisher  scan_pub_;
+  ros::Subscriber laseroff_sub_;
 
   void readCallback(const boost::system::error_code& error, size_t bytes_transferred);
   void readStart(uint32_t timeout_ms);
   void txCallback(const ros::TimerEvent& timer_event);
   void timeoutCallback(const boost::system::error_code& error);
+  void writelaserdata(const std_msgs::Int8 data);
+  void writeCallback(const boost::system::error_code& error, size_t write_bytes);
 
   boost::asio::io_service comm_uart_service_;
   boost::asio::serial_port comm_port_;
@@ -85,6 +88,7 @@ class SerialComm
   unsigned long sec_offset_;
   unsigned long n_sec_offset_;
   int time_sync_flag_;
+  int laseroff_flag_;
 
   //for the data holder..
 #define STEPSIZE 544

@@ -18,7 +18,7 @@ SerialComm::SerialComm(ros::NodeHandle nh, ros::NodeHandle nhp)
   n_sec_offset_ = 0;
   sec_offset_ = 0;
   offset_ = 0;
-
+  laseroff_flag_ = 0;
   start_flag_ = true;
 
   packet_stage_ = FIRST_HEADER_STAGE;
@@ -27,10 +27,13 @@ SerialComm::SerialComm(ros::NodeHandle nh, ros::NodeHandle nhp)
   time_offset = 0;
 
   std::string laser_name, laser_link;
-  nhp.param("laser_name", laser_name , std::string("J"));
+  nhp.param("laser_name", laser_name , std::string("S"));
   nhp.param("onlydistdata", onlydistdata , false);
   nhp.param("lensfocus", lensfocus , 3.6);
   nhp.param("laser_link", laser_link , std::string("laser_link"));
+
+  // now subscribe the laser on and off topic based on the laser name
+  laseroff_sub_ = nh_.subscribe("laser_"+laser_name, 1, &SerialComm::writelaserdata,this);
 
   laserscan_msg.angle_min = atan(2*lensfocus/SENSOR_LENGTH);
   laserscan_msg.angle_max = PI - laserscan_msg.angle_min;
@@ -77,13 +80,13 @@ SerialComm::SerialComm(ros::NodeHandle nh, ros::NodeHandle nhp)
   else if(!laser_name.compare(std::string("S")))
   {
       //S
-      poly[0] = 2.004878860926888e+09;
-      poly[1] = -6.155609773756969e+09;
-      poly[2] = 7.872203128922240e+09;
-      poly[3] = -5.367517768838326e+09;
-      poly[4] = 2.057909512255952e+09;
-      poly[5] = -4.206589491410656e+08;
-      poly[6] = 3.581571264948885e+07 + 6;
+      poly[0] = -2.549408277091120e+08;
+      poly[1] = 7.523750287522181e+08;
+      poly[2] = -9.233302994887389e+08;
+      poly[3] = 6.030756197063015e+08;
+      poly[4] = -2.210794714467771e+08;
+      poly[5] = 4.312265172284111e+07;
+      poly[6] = -3.496018182207191e+06;
       stable_temperature=470.0; // 47degree
       temperature_sensi = 0.09623;
   }
@@ -99,6 +102,19 @@ SerialComm::SerialComm(ros::NodeHandle nh, ros::NodeHandle nhp)
       poly[6] = 9.219599710241470e+04;
       stable_temperature=440.0; // 48degree
       temperature_sensi = 0.05623;
+  }
+  else if(!laser_name.compare(std::string("B")))
+  {
+      //B
+      poly[0] = -2.978862746841143e+09;
+      poly[1] =  9.122665726043562e+09;
+      poly[2] = -1.163304263540862e+10;
+      poly[3] = 7.906368906905105e+09;
+      poly[4] = -3.020636061831698e+09;
+      poly[5] = 6.150850343944727e+08;
+      poly[6] = -5.215300866143867e+07 + 1;
+      stable_temperature = 475.0; // 47degree
+      temperature_sensi = 0.09623;
   }
   else
   {
@@ -168,6 +184,27 @@ bool SerialComm::open(const std::string& port_str, int baudrate)
 
     /* シグナルハンドラの設定 */
     return true;
+}
+
+void SerialComm::writeCallback(const boost::system::error_code& error, size_t write_bytes)
+{
+
+}
+void SerialComm::writelaserdata(const std_msgs::Int8 data)
+{
+    boost::system::error_code error;
+    uint8_t buff[100];
+    buff[0] = data.data;
+    buff[1] = data.data;
+    if(buff[0] == 79)
+        laseroff_flag_ = 1;
+    else
+        laseroff_flag_ = 0;
+    boost::asio::write(comm_port_,boost::asio::buffer(buff,2), error);
+
+    if(error)
+        ROS_WARN("Write error: %s", error.message().c_str());
+
 }
 
 void SerialComm::readCallback(const boost::system::error_code& error, size_t bytes_transferred)
@@ -301,7 +338,8 @@ void SerialComm::readCallback(const boost::system::error_code& error, size_t byt
                         memcpy(&rawdata, &(comm_buffer_[i + 544]),2);
                         rawdataholder_b[num].push_back((float)rawdata / 10);
                         //all data received,  now we can process and publish... lol
-                        ProcPubData();
+                       // if(!laseroff_flag_)
+                            ProcPubData();
                     }
                     else
                     {
@@ -350,6 +388,11 @@ void SerialComm::ProcPubData()
     laserdata_msg.header.stamp = ros::Time::now();
     rawdata_msg.header.stamp = ros::Time::now();
     rawdata_msg.stepsize = STEPSIZE;
+    for(int k = 0; k<STEPSIZE/2;k++)
+    {
+        dist_dataholder[k] = 0; //clear this buffer
+        reflectance_dataholder[k] = 0; //clear this buffer
+    }
     for(int j = 0; j < RAWDATA_NUMBER; j++)
     {
         if(rawdataholder_a[j].size())
@@ -364,7 +407,7 @@ void SerialComm::ProcPubData()
 
             double k = top/(bot+top);
             double dist;
-            if(bot>240||bot<0)
+            if(bot>240||top>240||bot<0)
                 dist= 0;
             else if(bot+top>10 + (pulse_num_buff[j]%100)*0.4){  //here should be + TIMERCOUNTER * 0.4
                 float temperature =  (stable_temperature - (int)(pulse_num_buff[0]/100)) * temperature_sensi;  //last part is the temperature compensate
@@ -378,9 +421,13 @@ void SerialComm::ProcPubData()
             dist = dist>0?dist:0;
 
             if(bot>10&&top>10
-               &&bot<230&&top<230&&dist!=0){
+               &&bot<240&&top<240&&dist!=0){
                 //distance unity is cm
-                dist_dataholder[i] = dist;  // better to calculate all the data and do average
+                //dist_dataholder[i] = dist;  // better to calculate all the data and do average
+                if(dist_dataholder[i])
+                    dist_dataholder[i] = (dist_dataholder[i] + dist) / 2;
+                else
+                    dist_dataholder[i] = dist;
                 reflectance_dataholder[i] = dist * dist * (bot + top) / (pulse_num_buff[j] % 100);
             }
         }
@@ -403,9 +450,11 @@ void SerialComm::ProcPubData()
                 dist_dataholder[k] = 0; //clear this buffer
                 reflectance_dataholder[k] = 0; //clear this buffer
             }
-            rawdata_pub_.publish(rawdata_msg);
-            distances_pub_.publish(laserdata_msg);
-            scan_pub_.publish(laserscan_msg);
+            if(!laseroff_flag_){
+                rawdata_pub_.publish(rawdata_msg);
+                distances_pub_.publish(laserdata_msg);
+                scan_pub_.publish(laserscan_msg);
+            }
 
         }
     }
