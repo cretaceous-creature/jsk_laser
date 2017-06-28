@@ -16,8 +16,8 @@ SerialComm::SerialComm(ros::NodeHandle nh, ros::NodeHandle nhp)
     nhp.param("laser_name", laser_name , std::string("S"));
     nhp.param("onlydistdata", onlydistdata , false);
     nhp.param("lensfocus", lensfocus , 3.6);
-    nhp.param("laser_link", laser_link , std::string("laser_link"));
-
+    nhp.param("laser_link", laser_link , std::string("laser_link_"));
+    laser_link = laser_link+laser_name;
     distances_pub_ = nh_.advertise<jsk_laser::JskLaser>("/laser_data_"+laser_name, 5);
     rawdata_pub_ = nh_.advertise<jsk_laser::JskLaserRaw>("/laserraw_data_"+laser_name, 5);
     scan_pub_ = nh_.advertise<sensor_msgs::LaserScan>("/tiny_laserscan_"+laser_name, 5);
@@ -52,6 +52,7 @@ SerialComm::SerialComm(ros::NodeHandle nh, ros::NodeHandle nhp)
 
 
     std::cout<<"laser_name: "<<laser_name<<std::endl;
+    std::cout<<"laser_link: "<<laser_link<<std::endl;
     std::cout<<"only use distance data?  "<<onlydistdata<<std::endl;
     if(!laser_name.compare(std::string("R")))
     {
