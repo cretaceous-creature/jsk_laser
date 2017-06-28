@@ -5,11 +5,10 @@
 <arg name="debug" default="false" />
 <arg name="serial_port" default="/dev/ttyUSB0" />
 <arg name="baudrate" default="2000000" />
-pp
-<arg name="laser_name" default="S" />
+<arg name="laser_name" default="K" />
 <arg name="laser_link" default="laser_link" />
 <arg name="onlydistdata" default="false" />
-<arg name="lensfocus" default="3.6" />
+<arg name="lensfocus" default="8.0" />
 
 <!-- arg unless="$(arg debug)" name="launch_prefix" value="" /-->
 
@@ -29,6 +28,8 @@ pp
 " args="0.03 -0.01 -0.10 1.5708 -0.3 -1.5708 /rhsensor /laser_tilt_link  100" / -->
 
 <node name="laser_logger" pkg="jsk_laser" type="logger.py" output="screen">
+    <param name="laser_name" value="$(arg laser_name)" />
+    <param name="laser_link" value="$(arg laser_link)" />
 </node>
 
 </launch>

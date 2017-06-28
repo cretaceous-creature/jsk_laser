@@ -14,6 +14,9 @@ normalshow = 1
 enabelDBSCAN = 1
 focus = 3.6/5.12
 PI = math.atan(1)*4
+laser_name = 'J'
+laser_link = 'laser_link'
+
 
 QtGui.QApplication.setGraphicsSystem('raster')
 
@@ -118,7 +121,7 @@ def callback(data):
         data.reflectance = list(data.reflectance)
         for i in range(0,256):
             data.reflectance[i+8] = labels[i]
-        labelpub = rospy.Publisher("/label_data",JskLaser,queue_size=1)
+        labelpub = rospy.Publisher("/label_data_"+laser_name,JskLaser,queue_size=1)
         labelpub.publish(data)
         for i in range(0,256):
             for j in range(0,n_clusters):
@@ -186,10 +189,15 @@ def logger():
     # anonymous=True flag means that rospy will choose a unique
     # name for our 'listener' node so that multiple listeners can
     # run simultaneously.
-    rospy.init_node('laser_logger', anonymous=True)
+    global laser_name
+    global laser_link
+    rospy.init_node('laser_logger')
 
-    rospy.Subscriber("/laser_data", JskLaser, callback)
-    rospy.Subscriber("/laserraw_data", JskLaserRaw, rawdatacallback)
+    laser_name = rospy.get_param('~laser_name',laser_name)
+    laser_link = rospy.get_param('~laser_link',laser_link)
+
+    rospy.Subscriber("/laser_data_"+laser_name, JskLaser, callback)
+    rospy.Subscriber("/laserraw_data_"+laser_name, JskLaserRaw, rawdatacallback)
     # spin() simply keeps python from exiting until this node is stopped
 
 

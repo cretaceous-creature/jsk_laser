@@ -11,124 +11,126 @@ SerialComm::SerialComm(ros::NodeHandle nh, ros::NodeHandle nhp)
  , comm_error_count_(0)
  , comm_connected_(false)
 {
-  distances_pub_ = nh_.advertise<jsk_laser::JskLaser>("/laser_data", 5);
-  rawdata_pub_ = nh_.advertise<jsk_laser::JskLaserRaw>("/laserraw_data", 5);
-  scan_pub_ = nh_.advertise<sensor_msgs::LaserScan>("/tiny_laserscan", 5);
 
-  n_sec_offset_ = 0;
-  sec_offset_ = 0;
-  offset_ = 0;
-  laseroff_flag_ = 0;
-  start_flag_ = true;
+    std::string laser_name, laser_link;
+    nhp.param("laser_name", laser_name , std::string("S"));
+    nhp.param("onlydistdata", onlydistdata , false);
+    nhp.param("lensfocus", lensfocus , 3.6);
+    nhp.param("laser_link", laser_link , std::string("laser_link"));
 
-  packet_stage_ = FIRST_HEADER_STAGE;
-  receive_data_size_ = 1;
+    distances_pub_ = nh_.advertise<jsk_laser::JskLaser>("/laser_data_"+laser_name, 5);
+    rawdata_pub_ = nh_.advertise<jsk_laser::JskLaserRaw>("/laserraw_data_"+laser_name, 5);
+    scan_pub_ = nh_.advertise<sensor_msgs::LaserScan>("/tiny_laserscan_"+laser_name, 5);
 
-  time_offset = 0;
+    n_sec_offset_ = 0;
+    sec_offset_ = 0;
+    offset_ = 0;
+    laseroff_flag_ = 0;
+    start_flag_ = true;
 
-  std::string laser_name, laser_link;
-  nhp.param("laser_name", laser_name , std::string("S"));
-  nhp.param("onlydistdata", onlydistdata , false);
-  nhp.param("lensfocus", lensfocus , 3.6);
-  nhp.param("laser_link", laser_link , std::string("laser_link"));
+    packet_stage_ = FIRST_HEADER_STAGE;
+    receive_data_size_ = 1;
 
-  // now subscribe the laser on and off topic based on the laser name
-  laseroff_sub_ = nh_.subscribe("laser_"+laser_name, 1, &SerialComm::writelaserdata,this);
-
-  laserscan_msg.angle_min = atan(2*lensfocus/SENSOR_LENGTH);
-  laserscan_msg.angle_max = PI - laserscan_msg.angle_min;
-  laserscan_msg.angle_increment = (PI - 2*laserscan_msg.angle_min)/256;
-  laserscan_msg.range_min = 0;
-  laserscan_msg.range_max = 3.0;
-
-  laserscan_msg.header.frame_id = laser_link;
-  std::cout<<"angle_min: "<<laserscan_msg.angle_min<<std::endl;
-  std::cout<<"angle_max: "<<laserscan_msg.angle_max<<std::endl;
-  std::cout<<"angle_inc: "<<laserscan_msg.angle_increment<<std::endl;
-  std::cout<<"range_min: "<<laserscan_msg.range_min<<std::endl;
-  std::cout<<"range_max: "<<laserscan_msg.range_max<<std::endl;
+    time_offset = 0;
 
 
-  std::cout<<"laser_name: "<<laser_name<<std::endl;
-  std::cout<<"only use distance data?  "<<onlydistdata<<std::endl;
-  if(!laser_name.compare(std::string("R")))
-  {
-      //RED
-      poly[0] = 1.648001258107309e+06;
-      poly[1] = -5.305835891559632e+06;
-      poly[2] = 7.127857366587162e+06;
-      poly[3] = -5.110547144753641e+06;
-      poly[4] = 2.060999435889212e+06;
-      poly[5] = -4.423848603771256e+05 -15;
-      poly[6] = 3.937815633389474e+04 + 9;
-      stable_temperature=480.0; // 48degree
-      temperature_sensi = 0.09623;
-  }
-  else if(!laser_name.compare(std::string("J")))
-  {
-      //J
-      poly[0] = -7.030060013434869e+07;
-      poly[1] = 2.340939930305397e+08;
-      poly[2] = -3.244894105718181e+08;
-      poly[3] = 2.396546574907680e+08;
-      poly[4] = -9.946220641072804e+07;
-      poly[5] = 2.199337693620224e+07;
-      poly[6] = -2.024360412459942e+06 + 6;
-      stable_temperature=460.0; // 48degree
-      temperature_sensi = 0.05623;
-  }
-  else if(!laser_name.compare(std::string("S")))
-  {
-      //S
-      poly[0] = -2.549408277091120e+08;
-      poly[1] = 7.523750287522181e+08;
-      poly[2] = -9.233302994887389e+08;
-      poly[3] = 6.030756197063015e+08;
-      poly[4] = -2.210794714467771e+08;
-      poly[5] = 4.312265172284111e+07;
-      poly[6] = -3.496018182207191e+06;
-      stable_temperature=470.0; // 47degree
-      temperature_sensi = 0.09623;
-  }
-  else if(!laser_name.compare(std::string("K")))
-  {
-      //K
-      poly[0] = 2.147918234375362e+06;
-      poly[1] = -7.736068312640203e+06;
-      poly[2] = 1.154494186428487e+07;
-      poly[3] = -9.137795412258314e+06;
-      poly[4] = 4.045684724836031e+06;
-      poly[5] = -9.494901699902674e+05;
-      poly[6] = 9.219599710241470e+04;
-      stable_temperature=440.0; // 48degree
-      temperature_sensi = 0.05623;
-  }
-  else if(!laser_name.compare(std::string("B")))
-  {
-      //B
-      poly[0] = -2.978862746841143e+09;
-      poly[1] =  9.122665726043562e+09;
-      poly[2] = -1.163304263540862e+10;
-      poly[3] = 7.906368906905105e+09;
-      poly[4] = -3.020636061831698e+09;
-      poly[5] = 6.150850343944727e+08;
-      poly[6] = -5.215300866143867e+07 + 1;
-      stable_temperature = 475.0; // 47degree
-      temperature_sensi = 0.09623;
-  }
-  else
-  {
-      //T
-      poly[0] = -6.539712337289967e+05;
-      poly[1] =  2.522196790614386e+06;
-      poly[2] = -3.966911268599921e+06;
-      poly[3] = 3.266065347655729e+06;
-      poly[4] = -1.487548484816432e+06;
-      poly[5] = 3.563561476000117e+05 + 20;
-      poly[6] = -3.519452184644648e+04 - 9 + 6;
-      stable_temperature=460.0; // 48degree
-      temperature_sensi = 0.05623;
-  }
+    // now subscribe the laser on and off topic based on the laser name
+    laseroff_sub_ = nh_.subscribe("laser_"+laser_name, 1, &SerialComm::writelaserdata,this);
+
+    laserscan_msg.angle_min = atan(2*lensfocus/SENSOR_LENGTH);
+    laserscan_msg.angle_max = PI - laserscan_msg.angle_min;
+    laserscan_msg.angle_increment = (PI - 2*laserscan_msg.angle_min)/256;
+    laserscan_msg.range_min = 0;
+    laserscan_msg.range_max = 3.0;
+
+    laserscan_msg.header.frame_id = laser_link;
+    std::cout<<"angle_min: "<<laserscan_msg.angle_min<<std::endl;
+    std::cout<<"angle_max: "<<laserscan_msg.angle_max<<std::endl;
+    std::cout<<"angle_inc: "<<laserscan_msg.angle_increment<<std::endl;
+    std::cout<<"range_min: "<<laserscan_msg.range_min<<std::endl;
+    std::cout<<"range_max: "<<laserscan_msg.range_max<<std::endl;
+
+
+    std::cout<<"laser_name: "<<laser_name<<std::endl;
+    std::cout<<"only use distance data?  "<<onlydistdata<<std::endl;
+    if(!laser_name.compare(std::string("R")))
+    {
+        //RED
+        poly[0] = 1.648001258107309e+06;
+        poly[1] = -5.305835891559632e+06;
+        poly[2] = 7.127857366587162e+06;
+        poly[3] = -5.110547144753641e+06;
+        poly[4] = 2.060999435889212e+06;
+        poly[5] = -4.423848603771256e+05 -15;
+        poly[6] = 3.937815633389474e+04 + 9;
+        stable_temperature=480.0; // 48degree
+        temperature_sensi = 0.09623;
+    }
+    else if(!laser_name.compare(std::string("J")))
+    {
+        //J
+        poly[0] = -7.030060013434869e+07;
+        poly[1] = 2.340939930305397e+08;
+        poly[2] = -3.244894105718181e+08;
+        poly[3] = 2.396546574907680e+08;
+        poly[4] = -9.946220641072804e+07;
+        poly[5] = 2.199337693620224e+07;
+        poly[6] = -2.024360412459942e+06 + 6;
+        stable_temperature=460.0; // 48degree
+        temperature_sensi = 0.05623;
+    }
+    else if(!laser_name.compare(std::string("S")))
+    {
+        //S
+        poly[0] = -2.549408277091120e+08;
+        poly[1] = 7.523750287522181e+08;
+        poly[2] = -9.233302994887389e+08;
+        poly[3] = 6.030756197063015e+08;
+        poly[4] = -2.210794714467771e+08;
+        poly[5] = 4.312265172284111e+07;
+        poly[6] = -3.496018182207191e+06;
+        stable_temperature=470.0; // 47degree
+        temperature_sensi = 0.09623;
+    }
+    else if(!laser_name.compare(std::string("K")))
+    {
+        //K
+        poly[0] = 2.147918234375362e+06;
+        poly[1] = -7.736068312640203e+06;
+        poly[2] = 1.154494186428487e+07;
+        poly[3] = -9.137795412258314e+06;
+        poly[4] = 4.045684724836031e+06;
+        poly[5] = -9.494901699902674e+05;
+        poly[6] = 9.219599710241470e+04;
+        stable_temperature=440.0; // 48degree
+        temperature_sensi = 0.05623;
+    }
+    else if(!laser_name.compare(std::string("B")))
+    {
+        //B
+        poly[0] = -2.978862746841143e+09;
+        poly[1] =  9.122665726043562e+09;
+        poly[2] = -1.163304263540862e+10;
+        poly[3] = 7.906368906905105e+09;
+        poly[4] = -3.020636061831698e+09;
+        poly[5] = 6.150850343944727e+08;
+        poly[6] = -5.215300866143867e+07 + 1;
+        stable_temperature = 475.0; // 47degree
+        temperature_sensi = 0.09623;
+    }
+    else
+    {
+        //T
+        poly[0] = -6.539712337289967e+05;
+        poly[1] =  2.522196790614386e+06;
+        poly[2] = -3.966911268599921e+06;
+        poly[3] = 3.266065347655729e+06;
+        poly[4] = -1.487548484816432e+06;
+        poly[5] = 3.563561476000117e+05 + 20;
+        poly[6] = -3.519452184644648e+04 - 9 + 6;
+        stable_temperature=460.0; // 48degree
+        temperature_sensi = 0.05623;
+    }
 
 }
 
