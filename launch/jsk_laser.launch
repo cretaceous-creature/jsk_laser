@@ -5,10 +5,10 @@
 <arg name="debug" default="false" />
 <arg name="serial_port" default="/dev/ttyUSB0" />
 <arg name="baudrate" default="2000000" />
-<arg name="laser_name" default="K" />
+<arg name="laser_name" default="J" />
 <arg name="laser_link" default="laser_link_" />
 <arg name="onlydistdata" default="false" />
-<arg name="lensfocus" default="8.0" />
+<arg name="lensfocus" default="3.6" />
 
 <!-- arg unless="$(arg debug)" name="launch_prefix" value="" /-->
 
@@ -24,8 +24,7 @@
 
 </node>
 
- <!-- node name="tf_pub_laser_link" pkg="tf" type="static_transform_publisher\
-" args="0.03 -0.01 -0.10 1.5708 -0.3 -1.5708 /rhsensor /laser_tilt_link  100" / -->
+ <node name="tf_pub_laser_link" pkg="tf" type="static_transform_publisher" args="0.03 -0.01 -0.10 1.5708 -0.2 -1.5708 /rhsensor /laser_link_J  100" />
 
 <node name="laser_logger" pkg="jsk_laser" type="logger.py" output="screen">
     <param name="laser_name" value="$(arg laser_name)" />

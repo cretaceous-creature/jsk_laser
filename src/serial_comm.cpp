@@ -29,7 +29,7 @@ SerialComm::SerialComm(ros::NodeHandle nh, ros::NodeHandle nhp)
     start_flag_ = true;
 
     packet_stage_ = FIRST_HEADER_STAGE;
-    receive_data_size_ = 1;
+    recestive_data_size_ = 1;
 
     time_offset = 0;
 
