@@ -11,7 +11,6 @@ SerialComm::SerialComm(ros::NodeHandle nh, ros::NodeHandle nhp)
  , comm_error_count_(0)
  , comm_connected_(false)
 {
-
     std::string laser_name, laser_link;
     nhp.param("laser_name", laser_name , std::string("S"));
     nhp.param("onlydistdata", onlydistdata , false);
@@ -37,9 +36,9 @@ SerialComm::SerialComm(ros::NodeHandle nh, ros::NodeHandle nhp)
     // now subscribe the laser on and off topic based on the laser name
     laseroff_sub_ = nh_.subscribe("laser_"+laser_name, 1, &SerialComm::writelaserdata,this);
 
-    laserscan_msg.angle_min = atan(2*lensfocus/SENSOR_LENGTH);
-    laserscan_msg.angle_max = PI - laserscan_msg.angle_min;
-    laserscan_msg.angle_increment = (PI - 2*laserscan_msg.angle_min)/256;
+    laserscan_msg.angle_min = - atan2(SENSOR_LENGTH/2, lensfocus);
+    laserscan_msg.angle_max = - laserscan_msg.angle_min;
+    laserscan_msg.angle_increment = (laserscan_msg.angle_max - laserscan_msg.angle_min)/(STEPSIZE/ 2  - 16 -1 );
     laserscan_msg.range_min = 0;
     laserscan_msg.range_max = 3.0;
 
@@ -132,7 +131,6 @@ SerialComm::SerialComm(ros::NodeHandle nh, ros::NodeHandle nhp)
         stable_temperature=460.0; // 48degree
         temperature_sensi = 0.05623;
     }
-
 }
 
 SerialComm::~SerialComm()
@@ -440,15 +438,23 @@ void SerialComm::ProcPubData()
 
         if(j==RAWDATA_NUMBER-1)
         {
-            laserscan_msg.ranges.clear();
-            laserscan_msg.intensities.clear();
+            laserscan_msg.ranges.resize(STEPSIZE / 2 - 16);
+            laserscan_msg.intensities.resize(STEPSIZE / 2 - 16);
             for(int k = 0; k<STEPSIZE/2;k++)
             {
                 laserdata_msg.distances.push_back(dist_dataholder[k]);
                 laserdata_msg.reflectance.push_back(reflectance_dataholder[k]);
                 if(k>=8&&k<(STEPSIZE/2-8)){
-                  laserscan_msg.ranges.push_back(dist_dataholder[k]/100);
-                  laserscan_msg.intensities.push_back(reflectance_dataholder[k]/5000>1?1:reflectance_dataholder[k]/5000);
+
+                  /* assigment: */
+                  /*
+                    https://github.com/ros-perception/depthimage_to_laserscan/blob/indigo-devel/include/depthimage_to_laserscan/DepthImageToLaserScan.h#L170-L211
+                  */
+                  double th = atan2( (k - STEPSIZE/4) / (double)(STEPSIZE/2 - 16) * SENSOR_LENGTH, lensfocus);
+                  int index = (th - laserscan_msg.angle_min) / laserscan_msg.angle_increment;
+
+                  laserscan_msg.ranges[index] = dist_dataholder[k]/100;
+                  laserscan_msg.intensities[index] = reflectance_dataholder[k]/5000>1?1:reflectance_dataholder[k]/5000;
                 }
                 dist_dataholder[k] = 0; //clear this buffer
                 reflectance_dataholder[k] = 0; //clear this buffer
@@ -458,7 +464,6 @@ void SerialComm::ProcPubData()
                 distances_pub_.publish(laserdata_msg);
                 scan_pub_.publish(laserscan_msg);
             }
-
         }
     }
 }
