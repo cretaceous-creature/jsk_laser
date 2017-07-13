@@ -424,7 +424,7 @@ void SerialComm::ProcPubData()
             dist = dist>0?dist:0;
 
             if(bot>10&&top>10
-               &&bot<240&&top<240&&dist!=0){
+               &&bot<220&&top<220&&dist!=0){
                 //distance unity is cm
                 //dist_dataholder[i] = dist;  // better to calculate all the data and do average
                 if(dist_dataholder[i])
