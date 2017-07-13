@@ -410,7 +410,7 @@ void SerialComm::ProcPubData()
 
             double k = top/(bot+top);
             double dist;
-            if(bot>240||top>240||bot<0)
+            if(bot>230||top>230||bot<0)
                 dist= 0;
             else if(bot+top>10 + (pulse_num_buff[j]%100)*0.4){  //here should be + TIMERCOUNTER * 0.4
                 float temperature =  (stable_temperature - (int)(pulse_num_buff[0]/100)) * temperature_sensi;  //last part is the temperature compensate
