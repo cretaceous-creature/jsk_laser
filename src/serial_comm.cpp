@@ -102,7 +102,7 @@ SerialComm::SerialComm(ros::NodeHandle nh, ros::NodeHandle nhp)
         poly[3] = -9.137795412258314e+06;
         poly[4] = 4.045684724836031e+06;
         poly[5] = -9.494901699902674e+05;
-        poly[6] = 9.219599710241470e+04;
+        poly[6] = 9.219599710241470e+04 + 5;
         stable_temperature=440.0; // 48degree
         temperature_sensi = 0.05623;
     }
@@ -128,7 +128,7 @@ SerialComm::SerialComm(ros::NodeHandle nh, ros::NodeHandle nhp)
         poly[3] = 3.266065347655729e+06;
         poly[4] = -1.487548484816432e+06;
         poly[5] = 3.563561476000117e+05 + 20;
-        poly[6] = -3.519452184644648e+04 - 9 + 6;
+        poly[6] = -3.519452184644648e+04 - 9 + 4;
         stable_temperature=460.0; // 48degree
         temperature_sensi = 0.05623;
     }
