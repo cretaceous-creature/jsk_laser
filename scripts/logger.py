@@ -16,7 +16,7 @@ focus = 3.6/5.12
 PI = math.atan(1)*4
 laser_name = 'J'
 laser_link = 'laser_link'
-rawdataplot = 0
+rawdataplot = 1
 
 QtGui.QApplication.setGraphicsSystem('raster')
 
@@ -119,6 +119,8 @@ def callback(data):
 #    rospy.loginfo("%f", data.distances[100])
     data_backup = data
     data_backup.distances = list(data_backup.distances)
+    data_backup.distances[128] = np.asarray(data_backup.distances[127])
+    data_backup.distances[167] = np.asarray(data_backup.distances[166])
     p13.setData(data_backup.distances)
     data.distances = list(data.distances)
     for i in range(0, 16):
@@ -129,6 +131,8 @@ def callback(data):
     data.distances[16] = np.asarray(data.distances[19])
     data.distances[176] = np.asarray(data.distances[177])
     data.distances[175] = np.asarray(data.distances[174])
+    data.distances[128] = np.asarray(data.distances[127])
+    data.distances[167] = np.asarray(data.distances[166])
     
     if enabelDBSCAN:
         labels, n_clusters = cluster_dist(data,8,10)
@@ -170,7 +174,7 @@ def callback(data):
 
 
         #second time DBSCAN
-        labels, n_clusters = cluster_dist(data,1.5,8)
+        labels, n_clusters = cluster_dist(data,2.5,5)
         labeldata = list(data.distances)  #create a buffer to hold the label..
         data.reflectance = list(data.reflectance)
         # second DBSCAN find the centers...
@@ -223,7 +227,7 @@ def callback(data):
 def rawdatacallback(data):
 
     mw.show()
-    for j in range(0, 5):
+    for j in range(0, 2):
         data_a = []
         data_b = []
         if normalshow:

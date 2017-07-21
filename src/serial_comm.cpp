@@ -13,8 +13,8 @@ SerialComm::SerialComm(ros::NodeHandle nh, ros::NodeHandle nhp)
 {
 
     std::string laser_name, laser_link;
-    nhp.param("laser_name", laser_name , std::string("S"));
-    nhp.param("onlydistdata", onlydistdata , false);
+    nhp.param("laser_name", laser_name , std::string("J"));
+    nhp.param("onlydistdata", onlydistdata ,  true);
     nhp.param("lensfocus", lensfocus , 3.6);
     nhp.param("laser_link", laser_link , std::string("laser_link_"));
     laser_link = laser_link+laser_name;
@@ -221,8 +221,7 @@ void SerialComm::readCallback(const boost::system::error_code& error, size_t byt
             if (comm_timeout_)
             {
                 comm_timeout_ = false;
-                readStart(1000);
-                ROS_WARN("restart");
+
                 return;
             }
         }
@@ -311,7 +310,7 @@ void SerialComm::readCallback(const boost::system::error_code& error, size_t byt
                     short distance;
                     memcpy(&distance, &(comm_buffer_[i]),2);
                     //distances_msg.distances.push_back((float)distance/ SCALE);
-                    laserdata_msg.distances.push_back(distance);   //only distance
+                    laserdata_msg.distances.push_back(float(distance/100));   //only distance
                 }
                 distances_pub_.publish(laserdata_msg);
             }
@@ -437,6 +436,7 @@ void SerialComm::ProcPubData()
         rawdataholder_a[j].clear();
         rawdataholder_b[j].clear();
         dist_dataholder[175] = dist_dataholder[176];
+        //dist_dataholder[127] = dist_dataholder[126];
 
         if(j==RAWDATA_NUMBER-1)
         {
@@ -483,7 +483,7 @@ void SerialComm::timeoutCallback(const boost::system::error_code& error)
 {
     if (!error)
     {
-        comm_port_.cancel();
+ //       comm_port_.cancel();
         comm_timeout_ = true;
         ROS_WARN("Serial connection timed out.");
     }
