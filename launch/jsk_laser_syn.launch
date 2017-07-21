@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<launch>
+
+
+<arg name="laser_num" default="2" />
+<arg name="laser_name_0" default="R" />
+<arg name="laser_name_1" default="S" />
+<arg name="laser_name_2" default="J" />
+
+
+
+<node name="laser_synchronizer" pkg="jsk_laser" type="synchronizer.py" output="screen">
+    <param name="laser_num" value="$(arg laser_num)" />
+    <param name="laser_name_0" value="$(arg laser_name_0)" />
+    <param name="laser_name_1" value="$(arg laser_name_1)" />
+    <param name="laser_name_2" value="$(arg laser_name_2)" />
+</node>
+
+</launch>
