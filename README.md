@@ -12,3 +12,7 @@ for my details, ask chen!
 ## jsk_laser_node 
 
 ## logger.py
+
+## Hardware and Firmware repo:
+
+https://github.com/cretaceous-creature/jsk_laser_documents
