@@ -24,7 +24,7 @@
 
 </node>
 
- <node name="tf_pub_laser_link" pkg="tf" type="static_transform_publisher" args="0.03 -0.01 -0.10 1.5708 -0.2 -1.5708 /rhsensor /laser_link_J  100" />
+ <node name="tf_pub_laser_link" pkg="tf" type="static_transform_publisher" args="0.03 -0.01 -0.10 1.5708 -0.2 -1.5708 /rhsensor /laser_link_S  100" />
 
 <node name="laser_logger" pkg="jsk_laser" type="logger.py" output="screen">
     <param name="laser_name" value="$(arg laser_name)" />

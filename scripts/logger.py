@@ -14,7 +14,7 @@ normalshow = 1
 enabelDBSCAN = 1
 focus = 3.6/5.12
 PI = math.atan(1)*4
-laser_name = 'J'
+laser_name = 'S'
 laser_link = 'laser_link'
 rawdataplot = 1
 
@@ -121,11 +121,11 @@ def callback(data):
     data_backup.distances = list(data_backup.distances)
     data_backup.distances[128] = np.asarray(data_backup.distances[127])
     data_backup.distances[167] = np.asarray(data_backup.distances[166])
-    p13.setData(data_backup.distances)
+#    p13.setData(data_backup.distances)
     data.distances = list(data.distances)
     for i in range(0, 16):
         data.distances[i] = np.asarray(data.distances[i]) * 0
-    for i in range(245,271):
+    for i in range(260,271):
         data.distances[i] = np.asarray(data.distances[i]) * 0
     data.distances[17] = np.asarray(data.distances[19])
     data.distances[16] = np.asarray(data.distances[19])
@@ -133,9 +133,13 @@ def callback(data):
     data.distances[175] = np.asarray(data.distances[174])
     data.distances[128] = np.asarray(data.distances[127])
     data.distances[167] = np.asarray(data.distances[166])
+
+    for i in range(137,140):
+        data.distances[i] = np.asarray(data.distances[i]) * 0
+
     
     if enabelDBSCAN:
-        labels, n_clusters = cluster_dist(data,8,10)
+        labels, n_clusters = cluster_dist(data,20,8)
         ## then deal with each label... remove the edge
         index_b = 0
         index_e = 255
@@ -174,7 +178,7 @@ def callback(data):
 
 
         #second time DBSCAN
-        labels, n_clusters = cluster_dist(data,2.5,5)
+        labels, n_clusters = cluster_dist(data,5,8)
         labeldata = list(data.distances)  #create a buffer to hold the label..
         data.reflectance = list(data.reflectance)
         # second DBSCAN find the centers...
@@ -210,9 +214,9 @@ def callback(data):
             for j in range(0,n_clusters):
                 if labels[i] == -1:
                     labels[i] = labels[i-1]
-                    labeldata[i+8] = (labels[i-1]+2)*50
+                    labeldata[i+8] = (labels[i-1]+5)*30
                 else:
-                    labeldata[i+8] = (labels[i]+2)*50
+                    labeldata[i+8] = (labels[i]+5)*30
 
         p12.setData(labeldata)
 
@@ -227,7 +231,7 @@ def callback(data):
 def rawdatacallback(data):
 
     mw.show()
-    for j in range(0, 2):
+    for j in range(0, 5):
         data_a = []
         data_b = []
         if normalshow:

@@ -92,7 +92,7 @@ class SerialComm
 
   //for the data holder..
 #define STEPSIZE 544
-#define RAWDATA_NUMBER 5
+#define RAWDATA_NUMBER  5
   std::vector<float> rawdataholder_a[RAWDATA_NUMBER];
   std::vector<float> rawdataholder_b[RAWDATA_NUMBER];  // five 544 data...
 

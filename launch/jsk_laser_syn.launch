@@ -4,8 +4,8 @@
 
 
 <arg name="laser_num" default="2" />
-<arg name="laser_name_0" default="R" />
-<arg name="laser_name_1" default="S" />
+<arg name="laser_name_0" default="S" />
+<arg name="laser_name_1" default="J" />
 <arg name="laser_name_2" default="J" />
 
 
